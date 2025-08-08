@@ -49,12 +49,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </li>
 
     <!-- Products -->
-    <li class="nav-item <?= ($currentPage == 'product.php') ? 'active' : '' ?>">
+    <!-- <li class="nav-item <?= ($currentPage == 'product.php') ? 'active' : '' ?>">
         <a class="nav-link" href="../products/product.php">
             <i class="fas fa-fw fa-box"></i>
             <span>Products</span>
         </a>
-    </li>
+    </li> -->
 
     <!-- Add Sale -->
     <li class="nav-item <?= ($currentPage == 'sales.php') ? 'active' : '' ?>">
@@ -66,7 +66,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <!-- Sales Report -->
     <li class="nav-item <?= ($currentPage == 'sales_report.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../sales_report.php">
+        <a class="nav-link" href="../sales/sales_report.php">
             <i class="fas fa-fw fa-chart-line"></i>
             <span>Sales Report</span>
         </a>
