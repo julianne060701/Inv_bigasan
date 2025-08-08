@@ -1,3 +1,21 @@
+<?php
+session_start();  // Start session before any output
+
+// Redirect if not logged in as admin
+// Option 1: If you chose to use 'user_id' (recommended)
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php");
+    exit();
+}
+
+// Option 2: If you chose to use 'id' instead, use this:
+// if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
+//     header("Location: ../login.php");
+//     exit();
+// }
+
+include '../config/conn.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -46,12 +64,10 @@
             <!-- Footer -->
             <?php include('../includes/footer.php'); ?>
             <!-- End of Footer -->
-</div>
-        </div>
-        <!-- End of Content Wrapper -->
 
-    </div>
-    <!-- End of Page Wrapper -->
+        </div> <!-- End of Content Wrapper -->
+
+    </div> <!-- End of Page Wrapper -->
 
 </body>
 

@@ -370,6 +370,9 @@ while ($row = $result->fetch_assoc()) {
 
     <!-- SB Admin 2 scripts -->
     <script src="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/js/sb-admin-2.min.js"></script>
-
+    <script src="../vendor/jquery/jquery.min.js"></script>
+    <script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="../js/sb-admin-2.min.js"></script>
 </body>
 </html>
