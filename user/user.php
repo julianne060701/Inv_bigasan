@@ -4,13 +4,10 @@ include '../config/conn.php';
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Inventory - User Management</title>
-
     <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700,900" rel="stylesheet">
     <link href="../css/sb-admin-2.min.css" rel="stylesheet">
@@ -47,21 +44,42 @@ include '../config/conn.php';
                                         <th>Username</th>
                                         <th>Full Name</th>
                                         <th>Role</th>
-                                        
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
                                     $query = "SELECT * FROM users ORDER BY created_at DESC";
                                     $result = $conn->query($query);
+                                    $users = []; 
 
                                     if ($result && $result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
+                                            $userId = htmlspecialchars($row['id']);
+                                            $username = htmlspecialchars($row['username']);
+                                            $fullName = htmlspecialchars($row['full_name']);
+                                            $role = ucfirst(htmlspecialchars($row['role']));
+
+                                            $users[] = [
+                                                'id' => $userId,
+                                                'username' => $username,
+                                                'full_name' => $fullName,
+                                                'role' => $role
+                                            ];
+
                                             echo "<tr>";
-                                            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
-                                            echo "<td>" . htmlspecialchars($row['username']) . "</td>";
-                                            echo "<td>" . htmlspecialchars($row['full_name']) . "</td>";
-                                            echo "<td>" . ucfirst($row['role']) . "</td>";
+                                            echo "<td>{$userId}</td>";
+                                            echo "<td>{$username}</td>";
+                                            echo "<td>{$fullName}</td>";
+                                            echo "<td>{$role}</td>";
+                                            echo "<td class='text-center'>";
+                                            echo "<button class='btn btn-sm btn-info' data-toggle='modal' data-target='#viewUserModal{$userId}' title='View'>";
+                                            echo "<i class='fas fa-eye'></i>";
+                                            echo "</button> ";
+                                            echo "<a href='edit_user.php?id={$userId}' class='btn btn-sm btn-primary' title='Edit'>";
+                                            echo "<i class='fas fa-edit'></i>";
+                                            echo "</a>";
+                                            echo "</td>";
                                             echo "</tr>";
                                         }
                                     } else {
@@ -74,6 +92,28 @@ include '../config/conn.php';
                     </div>
                 </div>
 
+                <!-- Generate View User Modals (outside of table) -->
+                <?php
+                foreach ($users as $user) {
+                    echo "
+                    <div class='modal fade' id='viewUserModal{$user['id']}' tabindex='-1' role='dialog' aria-labelledby='viewUserModalLabel{$user['id']}' aria-hidden='true'>
+                        <div class='modal-dialog' role='document'>
+                            <div class='modal-content'>
+                                <div class='modal-header'>
+                                    <h5 class='modal-title'>User Details</h5>
+                                    <button type='button' class='close' data-dismiss='modal'><span>&times;</span></button>
+                                </div>
+                                <div class='modal-body'>
+                                    <p><strong>Username:</strong> {$user['username']}</p>
+                                    <p><strong>Full Name:</strong> {$user['full_name']}</p>
+                                    <p><strong>Role:</strong> {$user['role']}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>";
+                }
+                ?>
+
                 <!-- Add User Modal -->
                 <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -81,9 +121,7 @@ include '../config/conn.php';
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
-                                    <button type="button" class="close" data-dismiss="modal">
-                                        <span>&times;</span>
-                                    </button>
+                                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group">
@@ -116,9 +154,7 @@ include '../config/conn.php';
                     </div>
                 </div>
                 <!-- End Add User Modal -->
-
             </div>
-        </div>
         </div>
         <?php include('../includes/footer.php'); ?>
     </div>
@@ -131,10 +167,12 @@ include '../config/conn.php';
 <script src="../js/sb-admin-2.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
-
 <script>
     $(document).ready(function () {
-        $('#dataTable').DataTable();
+        $('#dataTable').DataTable({
+            "pageLength": 10,
+            "responsive": true
+        });
     });
 </script>
 </body>

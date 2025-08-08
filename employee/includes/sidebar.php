@@ -6,7 +6,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="../index.php">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
         <div class="sidebar-brand-icon">
             <img src="../img/bigasan_logo.png" alt="Reyze Bigasan Logo" style="width: 40px; height: 40px;">
         </div>
@@ -18,65 +18,33 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <!-- Dashboard -->
     <li class="nav-item <?= ($currentPage == 'index.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../index.php">
+        <a class="nav-link" href="index.php">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </li>
 
-    <!-- Rice Inventory -->
+    <!-- Rice Inventory (View Only) -->
     <li class="nav-item <?= ($currentPage == 'inventory.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../inventory/inventory.php">
+        <a class="nav-link" href="inventory.php">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Rice Inventory</span>
         </a>
     </li>
 
-    <!-- Category -->
-    <li class="nav-item <?= ($currentPage == 'categories.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../category/categories.php">
-            <i class="fas fa-fw fa-tags"></i>
-            <span>Categories</span>
-        </a>
-    </li>
-
-    <!-- Products -->
-    <li class="nav-item <?= ($currentPage == 'product.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../products/product.php">
-            <i class="fas fa-fw fa-box"></i>
-            <span>Products</span>
-        </a>
-    </li>
-
-    <!-- Add Sale -->
-    <li class="nav-item <?= ($currentPage == 'sales.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../sales/sales.php">
+    <!-- Record Sale -->
+    <li class="nav-item <?= ($currentPage == 'record_sale.php') ? 'active' : '' ?>">
+        <a class="nav-link" href="record_sale.php">
             <i class="fas fa-fw fa-shopping-cart"></i>
             <span>Record Sale</span>
         </a>
     </li>
 
-    <!-- Sales Report -->
-    <li class="nav-item <?= ($currentPage == 'sales_report.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../sales_report.php">
-            <i class="fas fa-fw fa-chart-line"></i>
-            <span>Sales Report</span>
-        </a>
-    </li>
-
-    <!-- Suppliers -->
-    <li class="nav-item <?= ($currentPage == 'suppliers.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../suppliers.php">
-            <i class="fas fa-fw fa-truck"></i>
-            <span>Suppliers</span>
-        </a>
-    </li>
-
     <!-- Low Stock Alerts -->
-    <li class="nav-item <?= ($currentPage == 'alerts.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../alerts.php">
+    <li class="nav-item <?= ($currentPage == 'low_stock.php') ? 'active' : '' ?>">
+        <a class="nav-link" href="low_stock.php">
             <i class="fas fa-fw fa-exclamation-triangle"></i>
-            <span>Stock Alerts</span>
+            <span>Low Stock Alerts</span>
         </a>
     </li>
 

@@ -60,23 +60,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <script src="../vendor/jquery/jquery.min.js"></script>
+<script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="../js/sb-admin-2.min.js"></script>
 </head>
 
 <body id="page-top">
 
 <div id="wrapper">
-    <?php include('../includes/sidebar.php'); ?>
+    <?php include('includes/sidebar.php'); ?>
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-            <?php include('../includes/topbar.php'); ?>
+            <?php include('includes/topbar.php'); ?>
 
             <div class="container-fluid">
                 <h1 class="h3 mb-2 text-gray-800">Rice Inventory</h1>
-            <!-- Add Rice Inventory Button -->
-            <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#addInventoryModal">
-                <i class="fas fa-plus"></i> Add Rice Inventory
-            </button>
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Inventory List</h6>
@@ -334,8 +334,10 @@ $(document).ready(function () {
     $('#dataTable').DataTable({
         "pageLength": 10,
         "ordering": true,
-        "searching": true
+        "searching": true,
+        "destroy": true // ✅ allows reinitialisation
     });
+});
 
     // Auto-calculate KG when sacks or sack weight changes (for add modal)
     function calculateKG() {
