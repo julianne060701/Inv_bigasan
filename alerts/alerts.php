@@ -108,13 +108,13 @@ include '../config/conn.php';
 
 <body id="page-top">
 <div id="wrapper">
-    <?php include('includes/sidebar.php'); ?>
+    <?php include('../includes/sidebar.php'); ?>
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-            <?php include('includes/topbar.php'); ?>
+            <?php include('../includes/topbar.php'); ?>
 
-            <div class="container-fluid">
+              <div class="container-fluid">
                 <!-- Page Heading -->
                 <div class="d-sm-flex align-items-center justify-content-between mb-4">
                     <h1 class="h3 mb-0 text-gray-800">
@@ -235,7 +235,7 @@ include '../config/conn.php';
                                             echo "</tr>";
                                         }
                                     } else {
-                                        echo "<tr><td colspan='11' class='text-center'>No low stock items found.</td></tr>";
+                                        echo "<tr><td colspan='10' class='text-center'>No low stock items found.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
@@ -269,7 +269,7 @@ include '../config/conn.php';
             "responsive": true,
             "order": [[2, "asc"]],
             "columnDefs": [
-                { "orderable": false, "targets": 10 }
+                { "orderable": false, "targets": 9 }
             ]
         });
     } else {

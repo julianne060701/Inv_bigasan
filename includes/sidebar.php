@@ -82,7 +82,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <!-- Low Stock Alerts -->
     <li class="nav-item <?= ($currentPage == 'alerts.php') ? 'active' : '' ?>">
-        <a class="nav-link" href="../alerts.php">
+        <a class="nav-link" href="../alerts/alerts.php">
             <i class="fas fa-fw fa-exclamation-triangle"></i>
             <span>Stock Alerts</span>
         </a>

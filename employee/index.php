@@ -1,4 +1,25 @@
 <?php
+// Start session and check authentication first
+session_start();
+
+// Check authentication - redirect to login if not logged in
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+// Check if user has employee role
+if (isset($_SESSION['role']) && $_SESSION['role'] !== 'employee') {
+    // Redirect to appropriate dashboard based on role
+    if ($_SESSION['role'] == 'admin') {
+        header("Location: ../dashboard/index.php");
+        exit();
+    } else {
+        header("Location: ../login.php");
+        exit();
+    }
+}
+
 include '../config/conn.php';
 
 // Initialize stats
@@ -93,10 +114,8 @@ while ($row = $result->fetch_assoc()) {
 <html lang="en">
 
 <head>
-    <?php include('includes/header.php'); ?>
-    <link rel="stylesheet" href="css/employee.css">
     <meta charset="UTF-8">
-    <title>Dashboard with Topbar</title>
+    <title>Employee Dashboard - Rice Inventory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap core CSS -->
@@ -107,6 +126,9 @@ while ($row = $result->fetch_assoc()) {
 
     <!-- SB Admin 2 Custom styles -->
     <link href="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- Custom Employee CSS -->
+    <link rel="stylesheet" href="css/employee.css">
 </head>
 
 <body id="page-top">

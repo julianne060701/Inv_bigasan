@@ -130,6 +130,12 @@ $chart_data = $result->fetch_all(MYSQLI_ASSOC);
 <head> 
     <?php include('../includes/header.php'); ?> 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700,900" rel="stylesheet">
+    <link href="../css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .filter-card {
             background: #f8f9fc;
@@ -201,24 +207,24 @@ $chart_data = $result->fetch_all(MYSQLI_ASSOC);
                             <div class="row align-items-end">
                                 <div class="col-md-8">
                                     <label class="form-label">Time Period:</label><br>
-                                    <button type="submit" name="filter" value="today" class="btn btn-outline-primary filter-btn <?= $filter == 'today' ? 'active' : '' ?>">Today</button>
-                                    <button type="submit" name="filter" value="week" class="btn btn-outline-primary filter-btn <?= $filter == 'week' ? 'active' : '' ?>">This Week</button>
-                                    <button type="submit" name="filter" value="month" class="btn btn-outline-primary filter-btn <?= $filter == 'month' ? 'active' : '' ?>">This Month</button>
-                                    <button type="submit" name="filter" value="year" class="btn btn-outline-primary filter-btn <?= $filter == 'year' ? 'active' : '' ?>">This Year</button>
-                                    <button type="submit" name="filter" value="overall" class="btn btn-outline-primary filter-btn <?= $filter == 'overall' ? 'active' : '' ?>">Overall</button>
+                                    <button type="submit" name="filter" value="today" class="btn btn-outline-primary filter-btn <?php echo $filter == 'today' ? 'active' : '' ?>">Today</button>
+                                    <button type="submit" name="filter" value="week" class="btn btn-outline-primary filter-btn <?php echo $filter == 'week' ? 'active' : '' ?>">This Week</button>
+                                    <button type="submit" name="filter" value="month" class="btn btn-outline-primary filter-btn <?php echo $filter == 'month' ? 'active' : '' ?>">This Month</button>
+                                    <button type="submit" name="filter" value="year" class="btn btn-outline-primary filter-btn <?php echo $filter == 'year' ? 'active' : '' ?>">This Year</button>
+                                    <button type="submit" name="filter" value="overall" class="btn btn-outline-primary filter-btn <?php echo $filter == 'overall' ? 'active' : '' ?>">Overall</button>
                                     <button type="button" class="btn btn-outline-secondary filter-btn" onclick="toggleCustomDate()">Custom Range</button>
                                 </div>
                             </div>
                             
                             <!-- Custom Date Range -->
-                            <div id="customDateRange" class="row mt-3" style="display: <?= $filter == 'custom' ? 'flex' : 'none' ?>">
+                            <div id="customDateRange" class="row mt-3" style="display: <?php echo $filter == 'custom' ? 'flex' : 'none' ?>">
                                 <div class="col-md-3">
                                     <label class="form-label">Start Date:</label>
-                                    <input type="date" name="start_date" class="form-control" value="<?= $start_date ?>" required>
+                                    <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">End Date:</label>
-                                    <input type="date" name="end_date" class="form-control" value="<?= $end_date ?>" required>
+                                    <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>" required>
                                 </div>
                                 <div class="col-md-2">
                                     <button type="submit" name="filter" value="custom" class="btn btn-primary">Apply Filter</button>
@@ -227,88 +233,7 @@ $chart_data = $result->fetch_all(MYSQLI_ASSOC);
                         </form>
                     </div>
  
-                    <!-- Summary Cards -->
-                    <div class="row mb-4">
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2 summary-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Total Revenue
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                ₱<?= number_format($summary['total_revenue'] ?? 0, 2) ?>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-peso-sign fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2 summary-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Total Transactions
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?= number_format($summary['total_transactions'] ?? 0) ?>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-receipt fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2 summary-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Total Quantity Sold
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                <?= number_format($summary['total_quantity_sold'] ?? 0, 2) ?> kg
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-weight fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2 summary-card">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Average Transaction
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                ₱<?= number_format($summary['avg_transaction'] ?? 0, 2) ?>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                 
 
                     <!-- Charts Row -->
                     <div class="row mb-4">
@@ -450,18 +375,26 @@ $chart_data = $result->fetch_all(MYSQLI_ASSOC);
     <script>
         function toggleCustomDate() {
             const customRange = document.getElementById('customDateRange');
-            customRange.style.display = customRange.style.display === 'none' ? 'flex' : 'none';
+            customRange.style.display = 'flex';
+            // Set filter to custom so form submits correctly
+            document.querySelectorAll('button.filter-btn').forEach(btn => btn.classList.remove('active'));
         }
+
+        // Prepare PHP data for JS safely
+        const chartLabels = <?php echo json_encode(array_map(function($item) { return date('M j', strtotime($item['sale_date'])); }, $chart_data)); ?>;
+        const chartData = <?php echo json_encode(array_map('floatval', array_column($chart_data, 'daily_revenue'))); ?>;
+        const riceTypeLabels = <?php echo json_encode(array_column($breakdown_data, 'rice_type')); ?>;
+        const riceTypeData = <?php echo json_encode(array_map('floatval', array_column($breakdown_data, 'total_revenue'))); ?>;
 
         // Sales Trend Chart
         const trendCtx = document.getElementById('salesTrendChart').getContext('2d');
         const trendChart = new Chart(trendCtx, {
             type: 'line',
             data: {
-                labels: [<?php echo implode(',', array_map(function($item) { return "'" . date('M j', strtotime($item['sale_date'])) . "'"; }, $chart_data)); ?>],
+                labels: chartLabels,
                 datasets: [{
                     label: 'Daily Revenue',
-                    data: [<?php echo implode(',', array_column($chart_data, 'daily_revenue')); ?>],
+                    data: chartData,
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.1)',
                     tension: 0.1,
@@ -498,9 +431,9 @@ $chart_data = $result->fetch_all(MYSQLI_ASSOC);
         const pieChart = new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: [<?php echo implode(',', array_map(function($item) { return "'" . htmlspecialchars($item['rice_type']) . "'"; }, $breakdown_data)); ?>],
+                labels: riceTypeLabels,
                 datasets: [{
-                    data: [<?php echo implode(',', array_column($breakdown_data, 'total_revenue')); ?>],
+                    data: riceTypeData,
                     backgroundColor: [
                         '#FF6384',
                         '#36A2EB',

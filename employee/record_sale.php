@@ -109,9 +109,24 @@ $sales_result = $conn->query($sales_query);
 <html lang="en">
 
 <head>
-    <?php include('includes/header.php'); ?>
-    <link rel="stylesheet" href="css/employee.css">
+    <meta charset="UTF-8">
+    <title>Sales Records - Rice Inventory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS (v4.6.2 - consistent with your theme) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+    <!-- SB Admin 2 Custom styles -->
+    <link href="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    
+    <!-- Custom Employee CSS -->
+    <link rel="stylesheet" href="css/employee.css">
 </head>
 
 <body id="page-top">
@@ -132,120 +147,106 @@ $sales_result = $conn->query($sales_query);
                 <!-- Topbar -->
                 <?php include('includes/topbar.php'); ?>
                 <!-- End of Topbar -->
+                
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
 
                     <!-- Success/Error Messages -->
                     <?php if ($success_message): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>
+                            <i class="fas fa-check-circle mr-2"></i>
                             <strong>Success!</strong> <?php echo $success_message; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
                         </div>
                     <?php endif; ?>
 
                     <?php if ($error_message): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <i class="fas fa-exclamation-circle mr-2"></i>
                             <strong>Error!</strong> <?php echo $error_message; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
                         </div>
                     <?php endif; ?>
+                    
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">
-                            <i class="fas fa-cash-register me-2"></i>Sales Records
+                            <i class="fas fa-cash-register mr-2"></i>Sales Records
                         </h1>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaleModal">
-                            <i class="fas fa-plus me-2"></i>New Sale
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#addSaleModal">
+                            <i class="fas fa-plus mr-2"></i>New Sale
                         </button>
                     </div>
 
-                    <!-- Sales Summary -->
-                    </div>
-                    </div>
-
                     <!-- Sales Table -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>
-                                <i class="fas fa-table"></i>
-                                Recent Sales Records
-                            </h5>
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <!-- <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-table mr-2"></i>Recent Sales Records
+                            </h6> -->
                         </div>
                         <div class="card-body">
-
                             <div class="table-responsive">
-                            <table class="table table-hover" id="salesTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Rice Type</th>
-                                <th>Quantity</th>
-                                <th>Unit</th>
-                                <th>Price/kg</th>
-                                <th>Total</th>
-                                <th>Cashier</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                                <?php if ($sales_result && $sales_result->num_rows > 0): ?>
-                                    <?php while($row = $sales_result->fetch_assoc()): ?>
+                                <table class="table table-bordered" id="salesTable" width="100%" cellspacing="0">
+                                    <thead>
                                         <tr>
-                                            <td><span>#<?php echo str_pad($row['sale_id'], 3, '0', STR_PAD_LEFT); ?></span></td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-seedling text-success me-2"></i>
-                                                    <?php echo htmlspecialchars($row['rice_type']); ?>
-                                                </div>
-                                            </td>
-                                            <td><span class="badge bg-info"><?php echo $row['quantity_sold']; ?></span></td>
-                                            <td><?php echo htmlspecialchars($row['unit']); ?></td>
-                                            <td>₱<?php echo number_format($row['price_per_kg'], 2); ?></td>
-                                            <td><strong>₱<?php echo number_format($row['total_amount'], 2); ?></strong></td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-user-circle text-primary me-2"></i>
-                                                    <?php echo htmlspecialchars($row['cashier']); ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-calendar me-1"></i>
-                                                    <?php echo date('M d, Y', strtotime($row['date_of_sale'])); ?>
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <div class="action-buttons">
-                                                    <button class="btn btn-sm btn-outline-primary" onclick="viewSale(<?php echo $row['sale_id']; ?>)">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-success" onclick="printReceipt(<?php echo $row['sale_id']; ?>)">
-                                                        <i class="fas fa-print"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            <th>ID</th>
+                                            <th>Rice Type</th>
+                                            <th>Quantity</th>
+                                            <th>Unit</th>
+                                            <th>Price/kg</th>
+                                            <th>Total</th>
+                                            <th>Cashier</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="9" class="text-center py-4">
-                                            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
-                                            <p class="text-muted mb-0">No sales records found.</p>
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-
-                            </div>
-                            <div class="loading-spinner">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Loading sales data...</p>
+                                    </thead>
+                                    <tbody>
+                                        <?php if ($sales_result && $sales_result->num_rows > 0): ?>
+                                            <?php while($row = $sales_result->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td>#<?php echo str_pad($row['sale_id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                                    <td>
+                                                        <i class="fas fa-seedling text-success mr-1"></i>
+                                                        <?php echo htmlspecialchars($row['rice_type']); ?>
+                                                    </td>
+                                                    <td><span class="badge badge-info"><?php echo $row['quantity_sold']; ?></span></td>
+                                                    <td><?php echo htmlspecialchars($row['unit']); ?></td>
+                                                    <td>₱<?php echo number_format($row['price_per_kg'], 2); ?></td>
+                                                    <td><strong>₱<?php echo number_format($row['total_amount'], 2); ?></strong></td>
+                                                    <td>
+                                                        <i class="fas fa-user-circle text-primary mr-1"></i>
+                                                        <?php echo htmlspecialchars($row['cashier']); ?>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            <?php echo date('M d, Y ', strtotime($row['date_of_sale'])); ?>
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="viewSale(<?php echo $row['sale_id']; ?>)" title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-success" onclick="printReceipt(<?php echo $row['sale_id']; ?>)" title="Print Receipt">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="9" class="text-center py-4">
+                                                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                                    <p class="text-muted mb-0">No sales records found.</p>
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -266,309 +267,253 @@ $sales_result = $conn->query($sales_query);
     </div>
     <!-- End of Page Wrapper -->
 
- <!-- Add Sale Modal -->
- <div class="modal fade" id="addSaleModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="saleForm" method="post" action="">
-                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white;">
-                    <h5 class="modal-title">
-                        <i class="fas fa-cash-register me-2"></i>Record New Sale
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                    <!-- Rice Type -->
-                    <div class="col-md-6">
-    <label for="rice_type" class="form-label">
-        <i class="fas fa-box me-1"></i>Rice Type
-    </label>
-    <select class="form-select" name="rice_type" id="rice_type" required>
-        <option value="">Select Rice Type</option>
-        <?php if ($rice_result && $rice_result->num_rows > 0): ?>
-            <?php
-            $rice_result->data_seek(0);
-            while($rice = $rice_result->fetch_assoc()):
-                $total_available_kg = $rice['quantity_kg'];
-                ?>
-                <option value="<?php echo htmlspecialchars($rice['rice_type']); ?>"
-                        data-price="<?php echo $rice['price_per_kg']; ?>"
-                        data-stock-sacks="<?php echo $rice['quantity_sacks']; ?>"
-                        data-stock-kg="<?php echo $rice['quantity_kg']; ?>"
-                        data-total-kg="<?php echo $total_available_kg; ?>"
-                        data-sack-weight="<?php echo $rice['sack_weight_kg']; ?>">
-                    <?php echo htmlspecialchars($rice['rice_type']); ?>
-                    (<?php echo $rice['quantity_sacks']; ?> sacks, <?php echo number_format($rice['quantity_kg'], 1); ?> kg total) - ₱<?php echo number_format($rice['price_per_kg'], 2); ?>/kg
-                </option>
-            <?php endwhile; ?>
-        <?php endif; ?>
-    </select>
-    <small class="form-text text-muted">
-        <i class="fas fa-info-circle me-1"></i>Shows available sacks, total kg and selling price
-    </small>
-</div>
-
-
-                    <!-- Quantity + Unit -->
-                <div class="col-12">
-                    <label class="form-label">
-                        <i class="fas fa-sort-numeric-up"></i> Quantity
-                    </label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" name="quantity_sacks" id="quantity_sacks" min="0.1" step="0.1" placeholder="e.g., 1.5" required>
-                        <span class="input-group-text">KG / Sack</span>
-                        <select class="form-select" name="unit" id="unit" required>
-                            <option value="sack">Sack</option>
-                            <option value="kg">Kilogram</option>
-                        </select>
+    <!-- Add Sale Modal -->
+    <div class="modal fade" id="addSaleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form id="saleForm" method="post" action="">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-cash-register mr-2"></i>Record New Sale
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
                     </div>
-                    <small class="form-text" id="stockInfo">Select rice type first</small>
-                </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Rice Type -->
+                            <div class="col-md-12 mb-3">
+                                <label for="rice_type" class="form-label">
+                                    <i class="fas fa-box mr-1"></i>Rice Type
+                                </label>
+                                <select class="form-control" name="rice_type" id="rice_type" required>
+                                    <option value="">Select Rice Type</option>
+                                    <?php if ($rice_result && $rice_result->num_rows > 0): ?>
+                                        <?php
+                                        $rice_result->data_seek(0);
+                                        while($rice = $rice_result->fetch_assoc()):
+                                            $total_available_kg = $rice['quantity_kg'];
+                                            ?>
+                                            <option value="<?php echo htmlspecialchars($rice['rice_type']); ?>"
+                                                    data-price="<?php echo $rice['price_per_kg']; ?>"
+                                                    data-stock-sacks="<?php echo $rice['quantity_sacks']; ?>"
+                                                    data-stock-kg="<?php echo $rice['quantity_kg']; ?>"
+                                                    data-total-kg="<?php echo $total_available_kg; ?>"
+                                                    data-sack-weight="<?php echo $rice['sack_weight_kg']; ?>">
+                                                <?php echo htmlspecialchars($rice['rice_type']); ?>
+                                                (<?php echo $rice['quantity_sacks']; ?> sacks, <?php echo number_format($rice['quantity_kg'], 1); ?> kg) - ₱<?php echo number_format($rice['price_per_kg'], 2); ?>/kg
+                                            </option>
+                                        <?php endwhile; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle mr-1"></i>Shows available sacks, total kg and selling price
+                                </small>
+                            </div>
 
-                        <!-- Price per KG -->
-                        <div class="col-md-6">
-                            <label for="price_per_kg" class="form-label">
-                                <i class="fas fa-peso-sign"></i>Price per KG
-                            </label>
-                            <input type="number" class="form-control" name="price_per_kg" id="price_per_kg" step="0.01" min="0" required>
+                            <!-- Quantity + Unit -->
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-sort-numeric-up mr-1"></i> Quantity
+                                </label>
+                                <input type="number" class="form-control" name="quantity_sacks" id="quantity_sacks" min="0.1" step="0.1" placeholder="e.g., 1.5" required>
+                                <small class="form-text" id="stockInfo">Select rice type first</small>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Unit</label>
+                                <select class="form-control" name="unit" id="unit" required>
+                                    <option value="sack">Sack</option>
+                                    <option value="kg">Kilogram</option>
+                                </select>
+                            </div>
+
+                            <!-- Price per KG -->
+                            <div class="col-md-6 mb-3">
+                                <label for="price_per_kg" class="form-label">
+                                    <i class="fas fa-peso-sign mr-1"></i>Price per KG
+                                </label>
+                                <input type="number" class="form-control" name="price_per_kg" id="price_per_kg" step="0.01" min="0" required>
+                            </div>
+
+                            <!-- Cashier Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="cashier_name" class="form-label">
+                                    <i class="fas fa-user mr-1"></i>Cashier Name
+                                </label>
+                                <input type="text" class="form-control" name="cashier_name" id="cashier_name"
+                                    value="<?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : ''; ?>" required>
+                            </div>
                         </div>
 
-                        <!-- Cashier Name -->
-                        <div class="col-md-6">
-                            <label for="cashier_name" class="form-label">
-                                <i class="fas fa-user"></i>Cashier Name
-                            </label>
-                            <input type="text" class="form-control" name="cashier_name" id="cashier_name"
-                                value="<?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : ''; ?>" required>
+                        <div class="alert alert-info mt-3" id="saleInfo" style="display: none;">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="saleDetails"></span>
                         </div>
 
+                        <div class="card bg-light mt-3" id="totalDisplay">
+                            <div class="card-body text-center">
+                                <h5 class="mb-0">Total: ₱0.00</h5>
+                            </div>
+                        </div>
                     </div>
-
-
-                    <div class="alert alert-info mt-3" id="saleInfo" style="display: none;">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <span id="saleDetails"></span>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitSale">
+                            <i class="fas fa-save mr-1"></i>Record Sale
+                        </button>
                     </div>
-
-                    <div class="total-display mt-4" id="totalDisplay">
-                        Total: ₱0.00
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="submitSale">
-                        <i class="fas fa-save me-1"></i>Record Sale
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-
-    <!-- Success Alert Template (hidden by default) -->
-    <!-- <div class="alert alert-success alert-dismissible fade" role="alert" id="successAlert" style="display: none;">
-        <i class="fas fa-check-circle me-2"></i>
-        <strong>Success!</strong> Sale recorded successfully!
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div> -->
-
-<!-- jQuery (optional, if needed) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-
-<!-- Bootstrap Bundle (includes Popper.js) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
-    <!-- SB Admin 2 scripts (optional) -->
-<script src="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/js/sb-admin-2.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- Your custom JS file -->
-<script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     
-     // Calculate total automatically and show sale info
-     function calculateTotal() {
-         const quantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
-         const price = parseFloat(document.getElementById('price_per_kg').value) || 0;
-         const unit = document.getElementById('unit').value;
-         const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-         const sackWeight = parseFloat(selectedOption.getAttribute('data-sack-weight')) || 0;
-         
-         let totalKg = 0;
-         let saleInfoText = '';
-         
-         if (unit === 'sack') {
-             totalKg = quantity * sackWeight;
-             saleInfoText = `Selling ${quantity} sack(s) = ${totalKg.toFixed(1)} kg`;
-         } else {
-             totalKg = quantity;
-             saleInfoText = `Selling ${quantity} kg`;
-         }
-         
-         const total = totalKg * price;
-         document.getElementById('totalDisplay').textContent = `Total: ₱${total.toFixed(2)}`;
-         
-         // Show sale info
-         if (quantity > 0 && sackWeight > 0) {
-             document.getElementById('saleDetails').textContent = saleInfoText;
-             document.getElementById('saleInfo').style.display = 'block';
-         } else {
-             document.getElementById('saleInfo').style.display = 'none';
-         }
-     }
+    <!-- Bootstrap Bundle -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
+    <!-- SB Admin 2 scripts -->
+    <script src="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/js/sb-admin-2.min.js"></script>
 
-     // Add event listeners for calculation
-     document.getElementById('quantity_sacks').addEventListener('input', calculateTotal);
-     document.getElementById('price_per_kg').addEventListener('input', calculateTotal);
-     document.getElementById('unit').addEventListener('change', function() {
-         updateStockInfo();
-         calculateTotal();
-     });
+    <script>
+        // Calculate total automatically and show sale info
+        function calculateTotal() {
+            const quantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
+            const price = parseFloat(document.getElementById('price_per_kg').value) || 0;
+            const unit = document.getElementById('unit').value;
+            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
+            const sackWeight = parseFloat(selectedOption.getAttribute('data-sack-weight')) || 0;
+            
+            let totalKg = 0;
+            let saleInfoText = '';
+            
+            if (unit === 'sack') {
+                totalKg = quantity * sackWeight;
+                saleInfoText = `Selling ${quantity} sack(s) = ${totalKg.toFixed(1)} kg`;
+            } else {
+                totalKg = quantity;
+                saleInfoText = `Selling ${quantity} kg`;
+            }
+            
+            const total = totalKg * price;
+            document.querySelector('#totalDisplay .card-body h5').textContent = `Total: ₱${total.toFixed(2)}`;
+            
+            // Show sale info
+            if (quantity > 0 && sackWeight > 0) {
+                document.getElementById('saleDetails').textContent = saleInfoText;
+                document.getElementById('saleInfo').style.display = 'block';
+            } else {
+                document.getElementById('saleInfo').style.display = 'none';
+            }
+        }
 
-     // Function to update stock info based on selected unit
-     function updateStockInfo() {
-         const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-         const unit = document.getElementById('unit').value;
-         const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
-         const stockKg = parseFloat(selectedOption.getAttribute('data-stock-kg')) || 0;
-         const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
-         
-         const stockInfo = document.getElementById('stockInfo');
-         const unitInfo = document.getElementById('unitInfo');
-         const quantityInput = document.getElementById('quantity_sacks');
-         
-         if (unit === 'sack') {
-             stockInfo.innerHTML = `Available: <span class="text-success">${stockSacks} sacks</span>`;
-             unitInfo.innerHTML = 'Selling by full sacks';
-             quantityInput.setAttribute('max', stockSacks);
-             quantityInput.setAttribute('step', '1');
-             quantityInput.setAttribute('min', '1');
-         } else {
-             stockInfo.innerHTML = `Available: <span class="text-success">${totalKg.toFixed(1)} kg total</span>`;
-             unitInfo.innerHTML = 'Selling by weight (kg)';
-             quantityInput.setAttribute('max', totalKg);
-             quantityInput.setAttribute('step', '0.1');
-             quantityInput.setAttribute('min', '0.1');
-         }
-     }
+        // Add event listeners for calculation
+        document.getElementById('quantity_sacks').addEventListener('input', calculateTotal);
+        document.getElementById('price_per_kg').addEventListener('input', calculateTotal);
+        document.getElementById('unit').addEventListener('change', function() {
+            updateStockInfo();
+            calculateTotal();
+        });
 
-    // Set preset prices when product is selected
-    document.getElementById('rice_type').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        
-        if (selectedOption.value) {
-            // Get data from the selected option
-            const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        // Function to update stock info based on selected unit
+        function updateStockInfo() {
+            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
+            const unit = document.getElementById('unit').value;
             const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
-            const stockKg = parseFloat(selectedOption.getAttribute('data-stock-kg')) || 0;
             const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
             
-            // Update price field
-            document.getElementById('price_per_kg').value = price.toFixed(2);
+            const stockInfo = document.getElementById('stockInfo');
+            const quantityInput = document.getElementById('quantity_sacks');
             
-            // Update stock info based on current unit selection
-            updateStockInfo();
-            
-            // Calculate total
-            calculateTotal();
-        } else {
-            // Reset fields if no product selected
-            document.getElementById('price_per_kg').value = '';
-            document.getElementById('stockInfo').innerHTML = 'Select rice type first';
-            document.getElementById('unitInfo').innerHTML = 'Choose selling unit';
-            document.getElementById('quantity_sacks').removeAttribute('max');
-            document.getElementById('saleInfo').style.display = 'none';
+            if (unit === 'sack') {
+                stockInfo.innerHTML = `Available: <span class="text-success">${stockSacks} sacks</span>`;
+                quantityInput.setAttribute('max', stockSacks);
+                quantityInput.setAttribute('step', '1');
+                quantityInput.setAttribute('min', '1');
+            } else {
+                stockInfo.innerHTML = `Available: <span class="text-success">${totalKg.toFixed(1)} kg total</span>`;
+                quantityInput.setAttribute('max', totalKg);
+                quantityInput.setAttribute('step', '0.1');
+                quantityInput.setAttribute('min', '0.1');
+            }
         }
-    });
 
-     // Form submission with loading state and stock validation
-     document.getElementById('saleForm').addEventListener('submit', function(e) {
-         const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-         const requestedQuantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
-         const unit = document.getElementById('unit').value;
-         const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
-         const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
-         
-         // Validate based on unit type
-         let validationError = '';
-         if (unit === 'sack') {
-             if (requestedQuantity > stockSacks) {
-                 validationError = `Error: Requested ${requestedQuantity} sacks exceeds available stock (${stockSacks} sacks).`;
-             }
-         } else {
-             if (requestedQuantity > totalKg) {
-                 validationError = `Error: Requested ${requestedQuantity} kg exceeds available stock (${totalKg.toFixed(1)} kg).`;
-             }
-         }
-         
-         if (validationError) {
-             e.preventDefault();
-             alert(validationError);
-             return false;
-         }
-         
-         const submitBtn = document.getElementById('submitSale');
-         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Recording...';
-         submitBtn.disabled = true;
-     });
-
-     // Search functionality
-     document.getElementById('salesSearch').addEventListener('keyup', function() {
-         const searchValue = this.value.toLowerCase();
-         const rows = document.querySelectorAll('#salesTable tbody tr');
-         
-         rows.forEach(row => {
-             const text = row.textContent.toLowerCase();
-             row.style.display = text.includes(searchValue) ? '' : 'none';
-         });
-     });
-
-     // Action functions
-     function viewSale(id) {
-         alert(`Viewing sale #${id}`);
-         // Add your view logic here
-     }
-
-     function printReceipt(id) {
-         alert(`Printing receipt for sale #${id}`);
-         // Add your print logic here
-     }
-
-     // Show success message (call this after successful form submission)
-     function showSuccessMessage() {
-         const alert = document.getElementById('successAlert');
-         alert.style.display = 'block';
-         alert.classList.add('show');
-         
-         // Hide after 5 seconds
-         setTimeout(() => {
-             alert.classList.remove('show');
-             setTimeout(() => {
-                 alert.style.display = 'none';
-             }, 150);
-         }, 5000);
-     }
-
-</script>
-<script>
-    $(document).ready(function () {
-        $('#salesTable').DataTable({
-            responsive: true,
-            pageLength: 10,
-            lengthChange: false,
-            order: [[0, 'desc']] // Sort by ID descending
+        // Set preset prices when product is selected
+        document.getElementById('rice_type').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+                document.getElementById('price_per_kg').value = price.toFixed(2);
+                updateStockInfo();
+                calculateTotal();
+            } else {
+                document.getElementById('price_per_kg').value = '';
+                document.getElementById('stockInfo').innerHTML = 'Select rice type first';
+                document.getElementById('quantity_sacks').removeAttribute('max');
+                document.getElementById('saleInfo').style.display = 'none';
+            }
         });
-    });
-</script>
+
+        // Form submission with loading state and stock validation
+        document.getElementById('saleForm').addEventListener('submit', function(e) {
+            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
+            const requestedQuantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
+            const unit = document.getElementById('unit').value;
+            const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
+            const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
+            
+            // Validate based on unit type
+            let validationError = '';
+            if (unit === 'sack') {
+                if (requestedQuantity > stockSacks) {
+                    validationError = `Error: Requested ${requestedQuantity} sacks exceeds available stock (${stockSacks} sacks).`;
+                }
+            } else {
+                if (requestedQuantity > totalKg) {
+                    validationError = `Error: Requested ${requestedQuantity} kg exceeds available stock (${totalKg.toFixed(1)} kg).`;
+                }
+            }
+            
+            if (validationError) {
+                e.preventDefault();
+                alert(validationError);
+                return false;
+            }
+            
+            const submitBtn = document.getElementById('submitSale');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Recording...';
+            submitBtn.disabled = true;
+        });
+
+        // Action functions
+        function viewSale(id) {
+            alert(`Viewing sale #${id}`);
+        }
+
+        function printReceipt(id) {
+            alert(`Printing receipt for sale #${id}`);
+        }
+
+        // Initialize DataTable
+        $(document).ready(function () {
+            $('#salesTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthChange: false,
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
 
 </body>
-
 </html>

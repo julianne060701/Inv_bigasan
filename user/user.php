@@ -156,6 +156,8 @@ include '../config/conn.php';
                 <!-- End Add User Modal -->
             </div>
         </div>
+        </div>
+        </div>
         <?php include('../includes/footer.php'); ?>
     </div>
 </div>
