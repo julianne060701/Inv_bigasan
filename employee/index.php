@@ -359,7 +359,7 @@ while ($row = $result->fetch_assoc()) {
                                                     </small>
                                                     <small class="text-muted">
                                                         <i class="fas fa-calendar mr-1"></i>
-                                                        <?php echo date("M d, h:i A", strtotime($sale['date_of_sale'])); ?>
+                                                        <?php echo date("M d, Y", strtotime($sale['date_of_sale'])); ?>
                                                     </small>
                                                 </div>
                                             </div>

@@ -3,17 +3,27 @@ include '../config/conn.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Retrieve values from the form
-    $product_name = $_POST['product_name'];
-    $buying_price = $_POST['buying_price'];
-    $quantity = $_POST['quantity'];
-    $category_id = $_POST['category_id'];
-    $selling_price = $_POST['selling_price'];
+    $product_name   = $_POST['product_name'];
+    $capacity       = $_POST['capacity']; // NEW FIELD
+    $buying_price   = $_POST['buying_price'];
+    $selling_price  = $_POST['selling_price'];
+    $quantity       = $_POST['quantity'];
+    $category_id    = $_POST['category_id'];
 
     // Prepare the INSERT statement
-    $stmt = $conn->prepare("INSERT INTO products (product_name, buying_price, quantity, category_id, selling_price) VALUES (?, ?, ?, ?, ?)");
-    
-    // Bind parameters: s = string, d = double (float), i = integer
-    $stmt->bind_param("sdiii", $product_name, $buying_price, $quantity, $category_id, $selling_price);
+    $stmt = $conn->prepare("INSERT INTO products (product_name, capacity, buying_price, selling_price, quantity, category_id) 
+                            VALUES (?, ?, ?, ?, ?, ?)");
+
+    // Bind parameters: 
+    // s = string, d = double, i = integer
+    $stmt->bind_param("ssddii", 
+        $product_name, 
+        $capacity, 
+        $buying_price, 
+        $selling_price, 
+        $quantity, 
+        $category_id
+    );
 
     if ($stmt->execute()) {
         header("Location: product.php?success=1");

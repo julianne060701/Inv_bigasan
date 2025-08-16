@@ -73,12 +73,8 @@ include '../config/conn.php';
                                             echo "<td>{$fullName}</td>";
                                             echo "<td>{$role}</td>";
                                             echo "<td class='text-center'>";
-                                            echo "<button class='btn btn-sm btn-info' data-toggle='modal' data-target='#viewUserModal{$userId}' title='View'>";
-                                            echo "<i class='fas fa-eye'></i>";
-                                            echo "</button> ";
-                                            echo "<a href='edit_user.php?id={$userId}' class='btn btn-sm btn-primary' title='Edit'>";
-                                            echo "<i class='fas fa-edit'></i>";
-                                            echo "</a>";
+                                            echo "<button class='btn btn-sm btn-info' data-toggle='modal' data-target='#viewUserModal{$userId}' title='View'><i class='fas fa-eye'></i></button> ";
+                                            echo "<button class='btn btn-sm btn-primary' data-toggle='modal' data-target='#editUserModal{$userId}' title='Edit'><i class='fas fa-edit'></i></button>";
                                             echo "</td>";
                                             echo "</tr>";
                                         }
@@ -92,11 +88,12 @@ include '../config/conn.php';
                     </div>
                 </div>
 
-                <!-- Generate View User Modals (outside of table) -->
+                <!-- Generate View & Edit Modals -->
                 <?php
                 foreach ($users as $user) {
+                    // View Modal
                     echo "
-                    <div class='modal fade' id='viewUserModal{$user['id']}' tabindex='-1' role='dialog' aria-labelledby='viewUserModalLabel{$user['id']}' aria-hidden='true'>
+                    <div class='modal fade' id='viewUserModal{$user['id']}' tabindex='-1' role='dialog'>
                         <div class='modal-dialog' role='document'>
                             <div class='modal-content'>
                                 <div class='modal-header'>
@@ -111,33 +108,74 @@ include '../config/conn.php';
                             </div>
                         </div>
                     </div>";
+
+                    // Edit Modal
+                    echo "
+                    <div class='modal fade' id='editUserModal{$user['id']}' tabindex='-1' role='dialog'>
+                        <div class='modal-dialog' role='document'>
+                            <form action='update_user.php' method='POST'>
+                                <div class='modal-content'>
+                                    <div class='modal-header'>
+                                        <h5 class='modal-title'>Edit User</h5>
+                                        <button type='button' class='close' data-dismiss='modal'><span>&times;</span></button>
+                                    </div>
+                                    <div class='modal-body'>
+                                        <input type='hidden' name='id' value='{$user['id']}'>
+                                        <div class='form-group'>
+                                            <label>Username</label>
+                                            <input type='text' name='username' class='form-control' value='{$user['username']}' required>
+                                        </div>
+                                        <div class='form-group'>
+                                            <label>Full Name</label>
+                                            <input type='text' name='full_name' class='form-control' value='{$user['full_name']}' required>
+                                        </div>
+                                        <div class='form-group'>
+                                            <label>New Password (leave blank to keep current)</label>
+                                            <input type='password' name='password' class='form-control'>
+                                        </div>
+                                        <div class='form-group'>
+                                            <label>Role</label>
+                                            <select name='role' class='form-control' required>
+                                                <option value='admin' ".($user['role'] == 'Admin' ? 'selected' : '').">Admin</option>
+                                                <option value='employee' ".($user['role'] == 'Employee' ? 'selected' : '').">Employee</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class='modal-footer'>
+                                        <button type='submit' class='btn btn-primary'>Save Changes</button>
+                                        <button type='button' class='btn btn-secondary' data-dismiss='modal'>Cancel</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>";
                 }
                 ?>
 
                 <!-- Add User Modal -->
-                <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
+                <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog">
                     <div class="modal-dialog" role="document">
                         <form action="add_user.php" method="POST">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+                                    <h5 class="modal-title">Add New User</h5>
                                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group">
-                                        <label for="username">Username</label>
+                                        <label>Username</label>
                                         <input type="text" name="username" class="form-control" required>
                                     </div>
                                     <div class="form-group">
-                                        <label for="full_name">Full Name</label>
+                                        <label>Full Name</label>
                                         <input type="text" name="full_name" class="form-control" required>
                                     </div>
                                     <div class="form-group">
-                                        <label for="password">Password</label>
+                                        <label>Password</label>
                                         <input type="password" name="password" class="form-control" required>
                                     </div>
                                     <div class="form-group">
-                                        <label for="role">Role</label>
+                                        <label>Role</label>
                                         <select name="role" class="form-control" required>
                                             <option value="">Select Role</option>
                                             <option value="admin">Admin</option>
@@ -162,7 +200,7 @@ include '../config/conn.php';
     </div>
 </div>
 
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
         $('#dataTable').DataTable({

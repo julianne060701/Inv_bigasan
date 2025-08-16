@@ -1,17 +1,14 @@
+<?php
+include '../config/conn.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Inventory - Categories</title>
-
-    <!-- Font Awesome -->
-    <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700,900" rel="stylesheet">
     <link href="../css/sb-admin-2.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
@@ -20,7 +17,6 @@
 <body id="page-top">
 <div id="wrapper">
     <?php include('../includes/sidebar.php'); ?>
-
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
             <?php include('../includes/topbar.php'); ?>
@@ -28,7 +24,6 @@
             <div class="container-fluid">
                 <h1 class="h3 mb-2 text-gray-800">Rice Categories</h1>
 
-                <!-- Add Category Button -->
                 <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#addCategoryModal">
                     <i class="fas fa-plus"></i> Add Category
                 </button>
@@ -49,48 +44,69 @@
                                 </thead>
                                 <tbody>
                                     <?php
-                                    include '../config/conn.php';
-
                                     $query = "SELECT * FROM category ORDER BY category_id DESC";
                                     $result = $conn->query($query);
 
                                     if ($result && $result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
                                             $category_id = $row['category_id'];
-                                            $modalId = "modal_" . $category_id;
+                                            $category_name = htmlspecialchars($row['category_name']);
+                                            $viewModalId = "viewModal_" . $category_id;
+                                            $editModalId = "editModal_" . $category_id;
 
-                                            echo "<tr>";
-                                            echo "<td>" . htmlspecialchars($row['category_id']) . "</td>";
-                                            echo "<td>" . htmlspecialchars($row['category_name']) . "</td>";
-                                            echo "<td class='text-center'>
-                                                    <button class='btn btn-sm btn-info' data-toggle='modal' data-target='#$modalId' title='View'>
-                                                        <i class='fas fa-eye'></i>
-                                                    </button>
-                                                    <a href='edit_category.php?id=$category_id' class='btn btn-sm btn-primary' title='Edit'>
-                                                        <i class='fas fa-edit'></i>
-                                                    </a>
-                                                  </td>";
-                                            echo "</tr>";
+                                            echo "<tr>
+                                                    <td>{$category_id}</td>
+                                                    <td>{$category_name}</td>
+                                                    <td class='text-center'>
+                                                        <button class='btn btn-sm btn-info' data-toggle='modal' data-target='#{$viewModalId}' title='View'>
+                                                            <i class='fas fa-eye'></i>
+                                                        </button>
+                                                        <button class='btn btn-sm btn-primary' data-toggle='modal' data-target='#{$editModalId}' title='Edit'>
+                                                            <i class='fas fa-edit'></i>
+                                                        </button>
+                                                    </td>
+                                                  </tr>";
 
                                             // View Modal
                                             echo "
-                                            <div class='modal fade' id='$modalId' tabindex='-1' role='dialog' aria-labelledby='modalLabel_$modalId' aria-hidden='true'>
-                                                <div class='modal-dialog' role='document'>
+                                            <div class='modal fade' id='{$viewModalId}' tabindex='-1'>
+                                                <div class='modal-dialog'>
                                                     <div class='modal-content'>
                                                         <div class='modal-header'>
-                                                            <h5 class='modal-title' id='modalLabel_$modalId'>Category Details</h5>
-                                                            <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                                                                <span aria-hidden='true'>&times;</span>
-                                                            </button>
+                                                            <h5 class='modal-title'>Category Details</h5>
+                                                            <button type='button' class='close' data-dismiss='modal'><span>&times;</span></button>
                                                         </div>
                                                         <div class='modal-body'>
-                                                            <p><strong>ID:</strong> " . htmlspecialchars($row['category_id']) . "</p>
-                                                            <p><strong>Type of Category:</strong> " . htmlspecialchars($row['category_name']) . "</p>
-                                                        </div>
-                                                        <div class='modal-footer'>
-                                                            <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+                                                            <p><strong>ID:</strong> {$category_id}</p>
+                                                            <p><strong>Type of Category:</strong> {$category_name}</p>
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>";
+
+                                            // Edit Modal
+                                            echo "
+                                            <div class='modal fade' id='{$editModalId}' tabindex='-1'>
+                                                <div class='modal-dialog'>
+                                                    <form action='update_category.php' method='POST'>
+                                                        <div class='modal-content'>
+                                                            <div class='modal-header'>
+                                                                <h5 class='modal-title'>Edit Category</h5>
+                                                                <button type='button' class='close' data-dismiss='modal'><span>&times;</span></button>
+                                                            </div>
+                                                            <div class='modal-body'>
+                                                                <input type='hidden' name='category_id' value='{$category_id}'>
+                                                                <div class='form-group'>
+                                                                    <label for='category_name'>Category Name</label>
+                                                                    <input type='text' class='form-control' name='category_name' value='{$category_name}' required>
+                                                                </div>
+                                                            </div>
+                                                            <div class='modal-footer'>
+                                                                <button type='submit' class='btn btn-primary'>Save Changes</button>
+                                                                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>";
                                         }
@@ -104,24 +120,20 @@
                             </table>
 
                             <!-- Add Category Modal -->
-                            <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
+                            <div class="modal fade" id="addCategoryModal" tabindex="-1">
+                                <div class="modal-dialog">
                                     <form action="add_category.php" method="POST">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title" id="addCategoryModalLabel">Add Category</h5>
-                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
+                                                <h5 class="modal-title">Add Category</h5>
+                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                                             </div>
-
                                             <div class="modal-body">
                                                 <div class="form-group">
                                                     <label for="category_name">Category Name</label>
-                                                    <input type="text" class="form-control" id="category_name" name="category_name" required>
+                                                    <input type="text" class="form-control" name="category_name" required>
                                                 </div>
                                             </div>
-
                                             <div class="modal-footer">
                                                 <button type="submit" class="btn btn-primary">Add Category</button>
                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -136,26 +148,19 @@
                 </div> <!-- card -->
             </div> <!-- container-fluid -->
         </div> <!-- content -->
-                                </div>
-                                </div>
 
         <?php include('../includes/footer.php'); ?>
     </div>
 </div>
-
-<!-- Scripts -->
 
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script>
     $(document).ready(function () {
         $('#dataTable').DataTable({
-            "pageLength": 10,
-            "ordering": true,
-            "searching": true
+            "pageLength": 10
         });
     });
 </script>
-
 </body>
 </html>

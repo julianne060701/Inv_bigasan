@@ -5,93 +5,70 @@ session_start(); // Needed for $_SESSION['username']
 $success_message = '';
 $error_message = '';
 
-// Fetch from rice_inventory table for dropdown
-$rice_sql = "SELECT rice_type, price_per_kg, sack_weight_kg, quantity_sacks, quantity_kg FROM rice_inventory";
-$rice_result = $conn->query($rice_sql);
+// Fetch from products table (aircon category) for dropdown
+$aircon_sql = "SELECT p.*, c.category_name 
+               FROM products p 
+               LEFT JOIN category c ON p.category_id = c.category_id 
+               WHERE LOWER(c.category_name) LIKE '%aircon%' 
+                  OR LOWER(c.category_name) LIKE '%air conditioner%'
+                  OR LOWER(c.category_name) LIKE '%ac%'
+               ORDER BY p.product_name";
+$aircon_result = $conn->query($aircon_sql);
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $rice_type = $_POST['rice_type'];
-    $quantity_input = (float)$_POST['quantity_sacks']; // This is the input quantity
-    $unit = $_POST['unit']; // 'kg' or 'sack'
-    $price_per_kg = (float)$_POST['price_per_kg'];
+    $product_id = $_POST['product_id'];
+    $quantity_input = (int)$_POST['quantity']; // Quantity of aircons sold
+    $payment_method = $_POST['payment_method']; // 'cash' or 'installment'
+    $selling_price = (float)$_POST['selling_price'];
     $cashier = $_POST['cashier_name'];
     $date_of_sale = date("Y-m-d H:i:s");
+    
+    // Calculate discount and final amounts
+    $subtotal = $selling_price * $quantity_input;
+    $discount_percentage = ($payment_method === 'cash') ? 10 : 0;
+    $discount_amount = $subtotal * ($discount_percentage / 100);
+    $total_amount = $subtotal - $discount_amount;
 
-    // Step 1: Get sack weight and current stock from DB
-    $stmt_fetch = $conn->prepare("SELECT sack_weight_kg, quantity_sacks, quantity_kg FROM rice_inventory WHERE rice_type = ?");
-    $stmt_fetch->bind_param("s", $rice_type);
+    // Step 1: Get current stock and product details from DB
+    $stmt_fetch = $conn->prepare("SELECT product_name, quantity FROM products WHERE id = ?");
+    $stmt_fetch->bind_param("i", $product_id);
     $stmt_fetch->execute();
-    $stmt_fetch->bind_result($sack_weight_kg, $current_sacks, $current_kg);
+    $stmt_fetch->bind_result($product_name, $current_stock);
     $stmt_fetch->fetch();
     $stmt_fetch->close();
 
-    // Calculate quantities based on unit
-    if ($unit === 'sack') {
-        $quantity_sacks_sold = $quantity_input; // Number of sacks being sold
-        $quantity_kg_sold = $quantity_input * $sack_weight_kg; // Convert sacks to kg
-    } else {
-        $quantity_sacks_sold = 0; // No full sacks sold, just loose kg
-        $quantity_kg_sold = $quantity_input; // Direct kg amount
-    }
-
     // Check stock availability
-    $total_kg_available = $current_kg; // Assuming quantity_kg is total available kg
-    
-    if ($unit === 'sack') {
-        // For sack sales, check if we have enough full sacks
-        if ($quantity_sacks_sold > $current_sacks) {
-            $error_message = "Insufficient sack stock. Available: {$current_sacks} sacks, Requested: {$quantity_sacks_sold} sacks.";
-        }
-    } else {
-        // For kg sales, check total kg availability
-        if ($quantity_kg_sold > $total_kg_available) {
-            $error_message = "Insufficient stock. Available: {$total_kg_available} kg, Requested: {$quantity_kg_sold} kg.";
-        }
+    if ($quantity_input > $current_stock) {
+        $error_message = "Insufficient stock. Available: {$current_stock} units, Requested: {$quantity_input} units.";
     }
 
     if (empty($error_message)) {
         // Begin transaction
         $conn->begin_transaction();
         try {
-            // Step 2: Insert into sales table
-            $total_amount = $price_per_kg * $quantity_kg_sold;
-
-            $insert_sale = $conn->prepare("INSERT INTO sales (rice_type, quantity_sold, unit, price_per_kg, total_amount, date_of_sale, cashier) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $insert_sale->bind_param("sdssdss", $rice_type, $quantity_input, $unit, $price_per_kg, $total_amount, $date_of_sale, $cashier);
+            // Step 2: Insert into aircon_sales table
+            $insert_sale = $conn->prepare("INSERT INTO aircon_sales (product_id, product_name, quantity_sold, unit_price, subtotal, payment_method, discount_percentage, discount_amount, total_amount, date_of_sale, cashier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $insert_sale->bind_param("isidisdddss", $product_id, $product_name, $quantity_input, $selling_price, $subtotal, $payment_method, $discount_percentage, $discount_amount, $total_amount, $date_of_sale, $cashier);
             $insert_sale->execute();
 
-            // Step 3: Update inventory based on unit type - ENHANCED VERSION
-            if ($unit === 'sack') {
-                // Selling full sacks - subtract from both sacks count and total kg
-                $new_sacks = $current_sacks - $quantity_sacks_sold;
-                $new_kg = $current_kg - $quantity_kg_sold;
-                
-            } else {
-                // Selling by kg - reduce total kg and recalculate equivalent sacks
-                $new_kg = $current_kg - $quantity_kg_sold;
-                
-                // Calculate how many equivalent sacks remain based on remaining kg
-                $new_sacks = $new_kg / $sack_weight_kg;
-                
-                // Note: $new_sacks can be fractional (e.g., 1.5 sacks)
-                // If you want to store only whole sacks, use: floor($new_sacks)
-            }
+            // Step 3: Update inventory
+            $new_stock = $current_stock - $quantity_input;
 
             // Ensure we don't have negative values
-            $new_sacks = max(0, $new_sacks);
-            $new_kg = max(0, $new_kg);
+            $new_stock = max(0, $new_stock);
 
             // Update inventory
-            $update_inventory = $conn->prepare("UPDATE rice_inventory SET quantity_sacks = ?, quantity_kg = ? WHERE rice_type = ?");
-            $update_inventory->bind_param("ids", $new_sacks, $new_kg, $rice_type);
+            $update_inventory = $conn->prepare("UPDATE products SET quantity = ? WHERE id = ?");
+            $update_inventory->bind_param("ii", $new_stock, $product_id);
             $update_inventory->execute();
 
             $conn->commit();
-            $success_message = "Sale recorded successfully! Sold: {$quantity_input} {$unit} of {$rice_type}";
+            $discount_text = ($payment_method === 'cash') ? " with 10% cash discount (₱" . number_format($discount_amount, 2) . " saved)" : "";
+            $success_message = "Sale recorded successfully! Sold: {$quantity_input} unit(s) of {$product_name}{$discount_text}. Total: ₱" . number_format($total_amount, 2);
             
-            // Auto refresh after 2 seconds
-            echo "<meta http-equiv='refresh' content='2'>";
+            // Auto refresh after 3 seconds
+            echo "<meta http-equiv='refresh' content='3'>";
             
         } catch (Exception $e) {
             $conn->rollback();
@@ -101,7 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch recent sales for display
-$sales_query = "SELECT * FROM sales ORDER BY sale_id DESC LIMIT 50";
+$sales_query = "SELECT * FROM aircon_sales ORDER BY sale_id DESC LIMIT 50";
 $sales_result = $conn->query($sales_query);
 ?>
 
@@ -110,7 +87,7 @@ $sales_result = $conn->query($sales_query);
 
 <head>
     <meta charset="UTF-8">
-    <title>Sales Records - Rice Inventory</title>
+    <title>Sales Records - Aircon Inventory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS (v4.6.2 - consistent with your theme) -->
@@ -175,7 +152,7 @@ $sales_result = $conn->query($sales_query);
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">
-                            <i class="fas fa-cash-register mr-2"></i>Sales Records
+                            <i class="fas fa-snowflake mr-2"></i>Aircon Sales Records
                         </h1>
                         <button class="btn btn-primary" data-toggle="modal" data-target="#addSaleModal">
                             <i class="fas fa-plus mr-2"></i>New Sale
@@ -195,10 +172,11 @@ $sales_result = $conn->query($sales_query);
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Rice Type</th>
+                                            <th>Product</th>
                                             <th>Quantity</th>
-                                            <th>Unit</th>
-                                            <th>Price/kg</th>
+                                            <th>Unit Price</th>
+                                            <th>Payment</th>
+                                            <th>Discount</th>
                                             <th>Total</th>
                                             <th>Cashier</th>
                                             <th>Date</th>
@@ -211,12 +189,28 @@ $sales_result = $conn->query($sales_query);
                                                 <tr>
                                                     <td>#<?php echo str_pad($row['sale_id'], 3, '0', STR_PAD_LEFT); ?></td>
                                                     <td>
-                                                        <i class="fas fa-seedling text-success mr-1"></i>
-                                                        <?php echo htmlspecialchars($row['rice_type']); ?>
+                                                        <i class="fas fa-snowflake text-info mr-1"></i>
+                                                        <?php echo htmlspecialchars($row['product_name']); ?>
                                                     </td>
                                                     <td><span class="badge badge-info"><?php echo $row['quantity_sold']; ?></span></td>
-                                                    <td><?php echo htmlspecialchars($row['unit']); ?></td>
-                                                    <td>₱<?php echo number_format($row['price_per_kg'], 2); ?></td>
+                                                    <td>₱<?php echo number_format($row['unit_price'], 2); ?></td>
+                                                    <td>
+                                                        <?php if ($row['payment_method'] === 'cash'): ?>
+                                                            <span class="badge badge-success"><i class="fas fa-money-bill-wave mr-1"></i>Cash</span>
+                                                        <?php else: ?>
+                                                            <span class="badge badge-warning"><i class="fas fa-credit-card mr-1"></i>Installment</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($row['discount_percentage'] > 0): ?>
+                                                            <span class="text-success">
+                                                                <?php echo $row['discount_percentage']; ?>%
+                                                                (-₱<?php echo number_format($row['discount_amount'], 2); ?>)
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">-</span>
+                                                        <?php endif; ?>
+                                                    </td>
                                                     <td><strong>₱<?php echo number_format($row['total_amount'], 2); ?></strong></td>
                                                     <td>
                                                         <i class="fas fa-user-circle text-primary mr-1"></i>
@@ -239,7 +233,7 @@ $sales_result = $conn->query($sales_query);
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="9" class="text-center py-4">
+                                                <td colspan="10" class="text-center py-4">
                                                     <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
                                                     <p class="text-muted mb-0">No sales records found.</p>
                                                 </td>
@@ -266,15 +260,14 @@ $sales_result = $conn->query($sales_query);
 
     </div>
     <!-- End of Page Wrapper -->
-
-    <!-- Add Sale Modal -->
+<!-- Add Sale Modal -->
     <div class="modal fade" id="addSaleModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form id="saleForm" method="post" action="">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">
-                            <i class="fas fa-cash-register mr-2"></i>Record New Sale
+                            <i class="fas fa-snowflake mr-2"></i>Record New Aircon Sale
                         </h5>
                         <button type="button" class="close text-white" data-dismiss="modal">
                             <span>&times;</span>
@@ -282,63 +275,88 @@ $sales_result = $conn->query($sales_query);
                     </div>
                     <div class="modal-body">
                         <div class="row">
-                            <!-- Rice Type -->
+                            <!-- Aircon Model -->
                             <div class="col-md-12 mb-3">
-                                <label for="rice_type" class="form-label">
-                                    <i class="fas fa-box mr-1"></i>Rice Type
+                                <label for="product_id" class="form-label">
+                                    <i class="fas fa-snowflake mr-1"></i>Aircon Model
                                 </label>
-                                <select class="form-control" name="rice_type" id="rice_type" required>
-                                    <option value="">Select Rice Type</option>
-                                    <?php if ($rice_result && $rice_result->num_rows > 0): ?>
+                                <select class="form-control" name="product_id" id="product_id" required>
+                                    <option value="">Select Aircon Model</option>
+                                    <?php if ($aircon_result && $aircon_result->num_rows > 0): ?>
                                         <?php
-                                        $rice_result->data_seek(0);
-                                        while($rice = $rice_result->fetch_assoc()):
-                                            $total_available_kg = $rice['quantity_kg'];
+                                        $aircon_result->data_seek(0);
+                                        while($product = $aircon_result->fetch_assoc()):
                                             ?>
-                                            <option value="<?php echo htmlspecialchars($rice['rice_type']); ?>"
-                                                    data-price="<?php echo $rice['price_per_kg']; ?>"
-                                                    data-stock-sacks="<?php echo $rice['quantity_sacks']; ?>"
-                                                    data-stock-kg="<?php echo $rice['quantity_kg']; ?>"
-                                                    data-total-kg="<?php echo $total_available_kg; ?>"
-                                                    data-sack-weight="<?php echo $rice['sack_weight_kg']; ?>">
-                                                <?php echo htmlspecialchars($rice['rice_type']); ?>
-                                                (<?php echo $rice['quantity_sacks']; ?> sacks, <?php echo number_format($rice['quantity_kg'], 1); ?> kg) - ₱<?php echo number_format($rice['price_per_kg'], 2); ?>/kg
+                                            <option value="<?php echo $product['id']; ?>"
+                                                    data-price="<?php echo $product['selling_price']; ?>"
+                                                    data-stock="<?php echo $product['quantity']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($product['product_name']); ?>">
+                                                <?php echo htmlspecialchars($product['product_name']); ?>
+                                                <?php if (!empty($product['capacity'])): ?>
+                                                    (<?php echo htmlspecialchars($product['capacity']); ?>)
+                                                <?php endif; ?>
+                                                - Stock: <?php echo $product['quantity']; ?> units - ₱<?php echo number_format($product['selling_price'], 2); ?>
                                             </option>
                                         <?php endwhile; ?>
                                     <?php endif; ?>
                                 </select>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle mr-1"></i>Shows available sacks, total kg and selling price
+                                    <i class="fas fa-info-circle mr-1"></i>Shows available stock and selling price
                                 </small>
                             </div>
 
-                            <!-- Quantity + Unit -->
-                            <div class="col-md-8 mb-3">
+                            <!-- Quantity -->
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">
                                     <i class="fas fa-sort-numeric-up mr-1"></i> Quantity
                                 </label>
-                                <input type="number" class="form-control" name="quantity_sacks" id="quantity_sacks" min="0.1" step="0.1" placeholder="e.g., 1.5" required>
-                                <small class="form-text" id="stockInfo">Select rice type first</small>
+                                <input type="number" class="form-control" name="quantity" id="quantity" min="1" step="1" placeholder="e.g., 2" required>
+                                <small class="form-text" id="stockInfo">Select aircon model first</small>
                             </div>
 
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Unit</label>
-                                <select class="form-control" name="unit" id="unit" required>
-                                    <option value="sack">Sack</option>
-                                    <option value="kg">Kilogram</option>
-                                </select>
-                            </div>
-
-                            <!-- Price per KG -->
+                            <!-- Selling Price -->
                             <div class="col-md-6 mb-3">
-                                <label for="price_per_kg" class="form-label">
-                                    <i class="fas fa-peso-sign mr-1"></i>Price per KG
+                                <label for="selling_price" class="form-label">
+                                    <i class="fas fa-peso-sign mr-1"></i>Unit Price
                                 </label>
-                                <input type="number" class="form-control" name="price_per_kg" id="price_per_kg" step="0.01" min="0" required>
+                                <input type="number" class="form-control" name="selling_price" id="selling_price" step="0.01" min="0" required>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-credit-card mr-1"></i>Payment Method
+                                </label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="card border-success payment-option" data-method="cash">
+                                            <div class="card-body text-center">
+                                                <input type="radio" name="payment_method" value="cash" id="cash" required>
+                                                <label for="cash" class="mb-0 d-block cursor-pointer">
+                                                    <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
+                                                    <h6 class="text-success">Cash Payment</h6>
+                                                    <small class="text-success font-weight-bold">10% Discount</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="card border-warning payment-option" data-method="installment">
+                                            <div class="card-body text-center">
+                                                <input type="radio" name="payment_method" value="installment" id="installment" required>
+                                                <label for="installment" class="mb-0 d-block cursor-pointer">
+                                                    <i class="fas fa-credit-card fa-2x text-warning mb-2"></i>
+                                                    <h6 class="text-warning">Installment</h6>
+                                                    <small class="text-muted">Full Price</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Cashier Name -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label for="cashier_name" class="form-label">
                                     <i class="fas fa-user mr-1"></i>Cashier Name
                                 </label>
@@ -352,9 +370,23 @@ $sales_result = $conn->query($sales_query);
                             <span id="saleDetails"></span>
                         </div>
 
-                        <div class="card bg-light mt-3" id="totalDisplay">
-                            <div class="card-body text-center">
-                                <h5 class="mb-0">Total: ₱0.00</h5>
+                        <!-- Price Breakdown -->
+                        <div class="card bg-light mt-3" id="priceBreakdown">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Subtotal:</small>
+                                        <div id="subtotalDisplay">₱0.00</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Discount:</small>
+                                        <div id="discountDisplay" class="text-success">₱0.00 (0%)</div>
+                                    </div>
+                                </div>
+                                <hr class="my-2">
+                                <div class="text-center">
+                                    <h5 class="mb-0" id="totalDisplay">Total: ₱0.00</h5>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -372,7 +404,7 @@ $sales_result = $conn->query($sales_query);
     </div>
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     
     <!-- Bootstrap Bundle -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script> -->
@@ -385,31 +417,29 @@ $sales_result = $conn->query($sales_query);
     <script src="https://cdn.jsdelivr.net/gh/StartBootstrap/startbootstrap-sb-admin-2/js/sb-admin-2.min.js"></script>
 
     <script>
-        // Calculate total automatically and show sale info
-        function calculateTotal() {
-            const quantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
-            const price = parseFloat(document.getElementById('price_per_kg').value) || 0;
-            const unit = document.getElementById('unit').value;
-            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-            const sackWeight = parseFloat(selectedOption.getAttribute('data-sack-weight')) || 0;
+         function calculateTotal() {
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const price = parseFloat(document.getElementById('selling_price').value) || 0;
+            const selectedOption = document.getElementById('product_id').options[document.getElementById('product_id').selectedIndex];
+            const productName = selectedOption.getAttribute('data-name') || '';
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
             
-            let totalKg = 0;
-            let saleInfoText = '';
+            const subtotal = quantity * price;
+            const isDiscounted = paymentMethod && paymentMethod.value === 'cash';
+            const discountPercentage = isDiscounted ? 10 : 0;
+            const discountAmount = subtotal * (discountPercentage / 100);
+            const total = subtotal - discountAmount;
             
-            if (unit === 'sack') {
-                totalKg = quantity * sackWeight;
-                saleInfoText = `Selling ${quantity} sack(s) = ${totalKg.toFixed(1)} kg`;
-            } else {
-                totalKg = quantity;
-                saleInfoText = `Selling ${quantity} kg`;
-            }
-            
-            const total = totalKg * price;
-            document.querySelector('#totalDisplay .card-body h5').textContent = `Total: ₱${total.toFixed(2)}`;
+            // Update displays
+            document.getElementById('subtotalDisplay').textContent = `₱${subtotal.toFixed(2)}`;
+            document.getElementById('discountDisplay').textContent = `₱${discountAmount.toFixed(2)} (${discountPercentage}%)`;
+            document.getElementById('discountDisplay').className = isDiscounted ? 'text-success font-weight-bold' : 'text-muted';
+            document.getElementById('totalDisplay').textContent = `Total: ₱${total.toFixed(2)}`;
             
             // Show sale info
-            if (quantity > 0 && sackWeight > 0) {
-                document.getElementById('saleDetails').textContent = saleInfoText;
+            if (quantity > 0 && productName) {
+                const paymentText = paymentMethod ? ` (${paymentMethod.value === 'cash' ? 'Cash - 10% discount' : 'Installment'})` : '';
+                document.getElementById('saleDetails').textContent = `Selling ${quantity} unit(s) of ${productName}${paymentText}`;
                 document.getElementById('saleInfo').style.display = 'block';
             } else {
                 document.getElementById('saleInfo').style.display = 'none';
@@ -417,76 +447,83 @@ $sales_result = $conn->query($sales_query);
         }
 
         // Add event listeners for calculation
-        document.getElementById('quantity_sacks').addEventListener('input', calculateTotal);
-        document.getElementById('price_per_kg').addEventListener('input', calculateTotal);
-        document.getElementById('unit').addEventListener('change', function() {
+        document.getElementById('quantity').addEventListener('input', function() {
             updateStockInfo();
             calculateTotal();
         });
+        document.getElementById('selling_price').addEventListener('input', calculateTotal);
+        
+        // Payment method change
+        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Update visual selection
+                document.querySelectorAll('.payment-option').forEach(option => {
+                    option.classList.remove('border-primary', 'bg-light');
+                });
+                
+                const selectedCard = document.querySelector(`.payment-option[data-method="${this.value}"]`);
+                selectedCard.classList.add('border-primary', 'bg-light');
+                
+                calculateTotal();
+            });
+        });
 
-        // Function to update stock info based on selected unit
+        // Function to update stock info
         function updateStockInfo() {
-            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-            const unit = document.getElementById('unit').value;
-            const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
-            const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
+            const selectedOption = document.getElementById('product_id').options[document.getElementById('product_id').selectedIndex];
+            const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+            const requestedQuantity = parseInt(document.getElementById('quantity').value) || 0;
             
             const stockInfo = document.getElementById('stockInfo');
-            const quantityInput = document.getElementById('quantity_sacks');
+            const quantityInput = document.getElementById('quantity');
             
-            if (unit === 'sack') {
-                stockInfo.innerHTML = `Available: <span class="text-success">${stockSacks} sacks</span>`;
-                quantityInput.setAttribute('max', stockSacks);
-                quantityInput.setAttribute('step', '1');
-                quantityInput.setAttribute('min', '1');
-            } else {
-                stockInfo.innerHTML = `Available: <span class="text-success">${totalKg.toFixed(1)} kg total</span>`;
-                quantityInput.setAttribute('max', totalKg);
-                quantityInput.setAttribute('step', '0.1');
-                quantityInput.setAttribute('min', '0.1');
+            if (selectedOption.value) {
+                stockInfo.innerHTML = `Available: <span class="text-success">${stock} units</span>`;
+                quantityInput.setAttribute('max', stock);
+                
+                // Show warning if requested quantity exceeds stock
+                if (requestedQuantity > stock) {
+                    stockInfo.innerHTML = `Available: <span class="text-danger">${stock} units</span> - <span class="text-danger">Exceeds stock!</span>`;
+                }
             }
         }
 
         // Set preset prices when product is selected
-        document.getElementById('rice_type').addEventListener('change', function() {
+        document.getElementById('product_id').addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             
             if (selectedOption.value) {
                 const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-                document.getElementById('price_per_kg').value = price.toFixed(2);
+                const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+                
+                document.getElementById('selling_price').value = price.toFixed(2);
+                document.getElementById('quantity').setAttribute('max', stock);
+                
                 updateStockInfo();
                 calculateTotal();
             } else {
-                document.getElementById('price_per_kg').value = '';
-                document.getElementById('stockInfo').innerHTML = 'Select rice type first';
-                document.getElementById('quantity_sacks').removeAttribute('max');
+                document.getElementById('selling_price').value = '';
+                document.getElementById('stockInfo').innerHTML = 'Select aircon model first';
+                document.getElementById('quantity').removeAttribute('max');
                 document.getElementById('saleInfo').style.display = 'none';
+                
+                // Reset price breakdown
+                document.getElementById('subtotalDisplay').textContent = '₱0.00';
+                document.getElementById('discountDisplay').textContent = '₱0.00 (0%)';
+                document.getElementById('totalDisplay').textContent = 'Total: ₱0.00';
             }
         });
 
         // Form submission with loading state and stock validation
         document.getElementById('saleForm').addEventListener('submit', function(e) {
-            const selectedOption = document.getElementById('rice_type').options[document.getElementById('rice_type').selectedIndex];
-            const requestedQuantity = parseFloat(document.getElementById('quantity_sacks').value) || 0;
-            const unit = document.getElementById('unit').value;
-            const stockSacks = parseInt(selectedOption.getAttribute('data-stock-sacks')) || 0;
-            const totalKg = parseFloat(selectedOption.getAttribute('data-total-kg')) || 0;
+            const selectedOption = document.getElementById('product_id').options[document.getElementById('product_id').selectedIndex];
+            const requestedQuantity = parseInt(document.getElementById('quantity').value) || 0;
+            const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
             
-            // Validate based on unit type
-            let validationError = '';
-            if (unit === 'sack') {
-                if (requestedQuantity > stockSacks) {
-                    validationError = `Error: Requested ${requestedQuantity} sacks exceeds available stock (${stockSacks} sacks).`;
-                }
-            } else {
-                if (requestedQuantity > totalKg) {
-                    validationError = `Error: Requested ${requestedQuantity} kg exceeds available stock (${totalKg.toFixed(1)} kg).`;
-                }
-            }
-            
-            if (validationError) {
+            // Validate stock
+            if (requestedQuantity > stock) {
                 e.preventDefault();
-                alert(validationError);
+                alert(`Error: Requested ${requestedQuantity} units exceeds available stock (${stock} units).`);
                 return false;
             }
             
@@ -513,7 +550,9 @@ $sales_result = $conn->query($sales_query);
                 order: [[0, 'desc']]
             });
         });
+        
+        // Style for cursor pointer
+        $('<style>.cursor-pointer { cursor: pointer; }</style>').appendTo('head');
     </script>
-
 </body>
 </html>
