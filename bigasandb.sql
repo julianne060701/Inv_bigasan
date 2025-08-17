@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 08, 2025 at 09:41 AM
+-- Generation Time: Aug 17, 2025 at 02:43 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,36 @@ SET time_zone = "+00:00";
 --
 -- Database: `bigasandb`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `aircon_inventory`
+--
+
+CREATE TABLE `aircon_inventory` (
+  `id` int(11) NOT NULL,
+  `aircon_model` varchar(255) DEFAULT NULL,
+  `selling_price` decimal(10,2) DEFAULT NULL,
+  `buying_price` decimal(10,2) DEFAULT NULL,
+  `quantity_stock` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `aircon_sales`
+--
+
+CREATE TABLE `aircon_sales` (
+  `sale_id` int(11) NOT NULL,
+  `aircon_model` varchar(255) DEFAULT NULL,
+  `quantity_sold` int(11) DEFAULT NULL,
+  `selling_price` decimal(10,2) DEFAULT NULL,
+  `total_amount` decimal(10,2) DEFAULT NULL,
+  `date_of_sale` datetime DEFAULT NULL,
+  `cashier` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -42,7 +72,9 @@ INSERT INTO `category` (`category_id`, `category_name`, `created_at`) VALUES
 (2, 'Regular', '2025-08-06 03:57:08'),
 (3, 'Broken', '2025-08-06 03:57:08'),
 (4, 'Standard', '2025-08-06 04:19:54'),
-(5, 'Standard', '2025-08-06 04:20:53');
+(5, 'Standard', '2025-08-06 04:20:53'),
+(6, 'Window Type', '2025-08-16 13:22:11'),
+(7, 'Split type wall-mounted', '2025-08-16 13:22:31');
 
 -- --------------------------------------------------------
 
@@ -52,23 +84,25 @@ INSERT INTO `category` (`category_id`, `category_name`, `created_at`) VALUES
 
 CREATE TABLE `products` (
   `id` int(11) NOT NULL,
-  `product_name` varchar(255) DEFAULT NULL,
+  `product_name` varchar(150) NOT NULL,
+  `capacity` varchar(20) DEFAULT NULL,
+  `buying_price` decimal(10,2) NOT NULL,
+  `selling_price` decimal(10,2) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
   `category_id` int(11) DEFAULT NULL,
-  `buying_price` decimal(10,2) DEFAULT NULL,
-  `selling_price` decimal(10,2) DEFAULT NULL,
-  `quantity` int(11) DEFAULT NULL
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `product_name`, `category_id`, `buying_price`, `selling_price`, `quantity`) VALUES
-(1, 'red', 4, 23.00, 25.00, 3),
-(2, 'Oil', NULL, 45.00, 50.00, 30),
-(3, 'Egg', NULL, 30.00, 8.00, 30),
-(4, 'Eggs', NULL, 12.00, 232.00, 4234),
-(5, 'Pig food', 1, 50.00, 55.00, 30);
+INSERT INTO `products` (`id`, `product_name`, `capacity`, `buying_price`, `selling_price`, `quantity`, `category_id`, `created_at`, `updated_at`) VALUES
+(2, 'Carrier Split Type Inverter', '1.5HP', 25000.00, 28999.00, 10, 1, '2025-08-16 13:28:08', '2025-08-16 13:28:08'),
+(3, 'Panasonic Split Type', '2.0HP', 30000.00, 33999.00, 7, 1, '2025-08-16 13:28:08', '2025-08-16 13:28:08'),
+(4, 'LG Double Door Ref', '8 cu.ft', 18000.00, 19999.00, 5, 2, '2025-08-16 13:28:08', '2025-08-16 13:28:08'),
+(5, 'Samsung Top Load', '10kg', 15000.00, 16999.00, 4, 3, '2025-08-16 13:28:08', '2025-08-16 13:28:08');
 
 -- --------------------------------------------------------
 
@@ -93,9 +127,10 @@ CREATE TABLE `rice_inventory` (
 --
 
 INSERT INTO `rice_inventory` (`id`, `rice_type`, `price_per_kg`, `unit`, `alert_threshold`, `category_id`, `sack_weight_kg`, `quantity_sacks`, `quantity_kg`) VALUES
-(1, 'Banay Banay', 30.00, 'sack', 15.00, 1, 50, 5.00, 275.00),
+(1, 'Banay Banay', 30.00, 'sack', 15.00, 1, 50, 3.00, 195.00),
 (2, 'Blue rice', 45.00, 'sack', 1.00, 2, 50, 1.00, 0.00),
-(3, 'Reds', 30.00, 'sack', 20.00, 4, 50, 0.00, 0.00);
+(3, 'Reds', 30.00, 'sack', 20.00, 4, 50, 20.00, 1000.00),
+(4, 'Jasmin', 45.00, 'sack', 10.00, 1, 50, 4.00, 200.00);
 
 -- --------------------------------------------------------
 
@@ -145,7 +180,11 @@ INSERT INTO `sales` (`sale_id`, `rice_type`, `quantity_sold`, `unit`, `price_per
 (24, 'Banay Banay', 1.00, 'sack', 30.00, 1500.00, '2025-08-08 04:26:54', 'staff'),
 (25, 'Banay Banay', 3.00, 'sack', 30.00, 4500.00, '2025-08-08 05:46:50', 'staff'),
 (26, 'Reds', 1.00, 'sack', 30.00, 1500.00, '2025-08-08 05:48:16', 'staff'),
-(27, 'Banay Banay', 25.00, 'kg', 30.00, 750.00, '2025-08-08 06:19:00', 'staff');
+(27, 'Banay Banay', 25.00, 'kg', 30.00, 750.00, '2025-08-08 06:19:00', 'staff'),
+(28, 'Banay Banay', 1.00, 'sack', 30.00, 1500.00, '2025-08-09 14:29:58', 'staff'),
+(29, 'Banay Banay', 30.00, 'kg', 30.00, 900.00, '2025-08-09 14:45:06', 'Admin'),
+(30, 'Jasmin', 16.00, 'sack', 45.00, 36000.00, '2025-08-09 15:26:34', 'Admin'),
+(31, 'Jasmin', 10.00, 'sack', 45.00, 22500.00, '2025-08-09 15:27:01', 'Admin');
 
 -- --------------------------------------------------------
 
@@ -185,6 +224,18 @@ INSERT INTO `users` (`id`, `username`, `full_name`, `password`, `role`, `created
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `aircon_inventory`
+--
+ALTER TABLE `aircon_inventory`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `aircon_sales`
+--
+ALTER TABLE `aircon_sales`
+  ADD PRIMARY KEY (`sale_id`);
 
 --
 -- Indexes for table `category`
@@ -230,10 +281,22 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `aircon_inventory`
+--
+ALTER TABLE `aircon_inventory`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `aircon_sales`
+--
+ALTER TABLE `aircon_sales`
+  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `category`
 --
 ALTER TABLE `category`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -245,13 +308,13 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `rice_inventory`
 --
 ALTER TABLE `rice_inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
